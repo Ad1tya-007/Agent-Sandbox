@@ -1,0 +1,45 @@
+---
+description: Layer boundaries, event-driven updates, and quality bar for Agent Sandbox Desktop
+alwaysApply: false
+---
+
+# Architecture
+
+```
+React UI  →  WebSocket / HTTP  →  Go backend  →  client-go  →  Agent Sandbox CRDs
+                 ↑
+         Tauri (Rust) shell
+```
+
+- Tauri/Rust is the **desktop shell** only (window, process lifetime). Do not put Kubernetes clients, kubeconfig parsing, or product logic in `src-tauri`.
+- Go owns **all** business logic and Kubernetes access.
+- The frontend **never** talks to the cluster (no client-go, kubectl, or kubeconfig parsing in the UI).
+- The Kubernetes package is a thin adapter. The sandbox service owns validation and lifecycle. HTTP/WebSocket handlers know transport, not domain rules.
+
+```go
+// ❌ BAD — handler creates sandboxes and talks to the API server
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+    client.Create(r.Context(), parseSandbox(r))
+}
+
+// ✅ GOOD — handler decodes/encodes; service validates and orchestrates
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+    spec, err := decodeCreate(r)
+    if err != nil { writeAPIError(w, err); return }
+    sb, err := h.sandboxes.Create(r.Context(), spec)
+    writeJSON(w, sb, err)
+}
+```
+
+## Event-driven, never polling
+
+Drive the UI from Kubernetes Watches → internal events → WebSocket. No `setInterval` cluster refresh. No "Refresh" button as the source of truth.
+
+Logs use the Kubernetes log API over WebSocket. Reconnect and close streams explicitly. Support multiple viewers.
+
+## Quality
+
+- Failures are returned as structured API errors; processes do not crash on bad input or dropped watches.
+- Retry watch/stream reconnects; do not retry create/delete blindly.
+- Small functions, one package per responsibility, no duplicated mapping logic.
+- The UI must always answer: is it loading, did it succeed, is this live?

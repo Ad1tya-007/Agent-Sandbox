@@ -1,0 +1,44 @@
+---
+description: Go package layout and Kubernetes/service/watch/log/resource boundaries
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go Backend
+
+Keep packages non-overlapping. New code goes in the owning package; do not dump helpers into `api` or `kubernetes`.
+
+```
+backend/
+  cmd/                 # process entry only
+  internal/
+    api/               # HTTP + JSON only
+    websocket/         # WS accept, subscribe, broadcast
+    sandbox/           # validation + lifecycle (pause/resume/delete)
+    kubernetes/        # client-go calls only — no business rules
+    watcher/           # register watches, fan-in, publish internally
+    logs/              # open/forward/reconnect/close; multi-viewer
+    resources/         # map Sandbox → Pod, PVC, Service, Events
+    models/            # API/domain types
+```
+
+```go
+// ❌ BAD — kubernetes package validates and knows HTTP status codes
+func (c *Client) CreateSandbox(ctx context.Context, name, image string) error {
+    if name == "" { return errBadRequest }
+    return c.cs.Create(ctx, build(name, image))
+}
+
+// ✅ GOOD — kubernetes applies a fully formed object; sandbox service validates
+func (s *Service) Create(ctx context.Context, in CreateInput) (*Sandbox, error) {
+    if err := in.Validate(); err != nil { return nil, err }
+    obj := s.manifest.FromCreate(in)
+    return s.k8s.CreateSandbox(ctx, obj)
+}
+```
+
+- `sandbox` must not import `net/http` or UI types.
+- `kubernetes` must not encode product policy (defaults, UX errors, pause semantics beyond the API call).
+- `watcher` is the source of list/status/delete UI updates. Use Informers/Watches, not periodic `List`.
+- `resources` discovers children via **labels and OwnerReferences** only — no cluster-wide scans by name guesswork.
+- `logs` owns stream lifetime: one upstream per sandbox, N subscribers, clean cancel on inspector close.

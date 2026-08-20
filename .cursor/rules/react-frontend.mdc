@@ -1,0 +1,42 @@
+---
+description: React feature layout, no-K8s UI, inspector/explorer constraints, dense native UX
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# React Frontend
+
+Organize by feature. API and WebSocket live in `services/` and `websocket/` — never inside components.
+
+```
+src/
+  components/   # presentational, reusable
+  pages/        # feature screens
+  hooks/        # subscribe to live state
+  services/     # HTTP commands (create/pause/resume/delete)
+  websocket/    # connection + event dispatch
+  models/       # view models
+  layouts/      # shell, panes
+```
+
+```tsx
+// ❌ BAD
+function SandboxList() {
+  const [items, setItems] = useState([])
+  useEffect(() => { fetch("/api/sandboxes").then(r => r.json()).then(setItems) }, [])
+  return <button onClick={() => fetch("/api/sandboxes").then(/* refresh */)}>Refresh</button>
+}
+
+// ✅ GOOD
+function SandboxList() {
+  const sandboxes = useSandboxes() // hydrated + updated from WS events
+  return <SandboxTable rows={sandboxes} />
+}
+```
+
+- Commands (create/pause/resume/delete) go through `services/`. Subscriptions go through hooks over WebSocket.
+- List updates from watch events. Delete confirmation in the UI; the row disappears when the delete event arrives, not when the HTTP call returns alone.
+- Inspector: **Logs** (live stream, auto-scroll, pause scroll, search, copy), **Events** (readable timeline: Created → Image Pulled → Started → Running), **YAML** (read-only). No extra tabs.
+- Resource explorer is a tree for the selected sandbox, not a cluster-wide navigator.
+
+UX: minimal, fast, native, information-dense. No decorative animation. Always show connection, loading, success, and error so the user never wonders if data is current.

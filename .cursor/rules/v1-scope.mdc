@@ -1,0 +1,26 @@
+---
+description: V1 product scope — three features only; reject stretch goals and non-goals
+alwaysApply: true
+---
+
+# V1 Scope
+
+This is a native developer tool for Agent Sandbox on Kubernetes — not a cluster dashboard, not an AI chat app, not Docker Desktop.
+
+Ship **three features exceptionally well**. Do not add a fourth.
+
+## In scope
+
+1. **Sandbox lifecycle** — create (name, image, CPU, memory, optional PVC), list, pause/resume, delete with confirmation.
+2. **Live inspector** — exactly three tabs: Logs, Events (human timeline, not raw K8s dumps), YAML (read-only).
+3. **Resource explorer** — Sandbox → Pod / PVC / Service / Events via labels and OwnerReferences. Educational, not a generic object browser.
+
+MVP is done when a user can connect to an existing cluster and complete those flows with live data. Do not expand scope to "feel complete."
+
+## Out of scope (do not implement, stub, or "just add")
+
+AI chat, agent creation, auth, multi-user, RBAC, cluster provisioning, metrics/Prometheus, terminal, file browser, resource editing, templates, marketplace, plugins.
+
+Stretch (multi-cluster, namespaces, themes, shortcuts, Warm Pools, Claims, snapshots) **only after** the three features are polished.
+
+If a request is outside this list: say so, keep the architecture clean, and do not sneak it into v1.
