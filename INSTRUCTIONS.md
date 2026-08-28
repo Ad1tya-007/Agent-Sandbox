@@ -258,6 +258,8 @@ Users should understand how Agent Sandbox maps onto Kubernetes objects.
 
 # Backend Architecture
 
+The UI is already built. Implement the Go backend against that UI using the step-by-step playbook in [`BACKEND.md`](BACKEND.md). Do not invent new HTTP routes or JSON field names.
+
 Backend code should be cleanly separated.
 
 ```

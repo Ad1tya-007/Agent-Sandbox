@@ -94,7 +94,7 @@ export function CreateSandboxDialog({
                 id="sandbox-image"
                 required
                 autoComplete="off"
-                placeholder="python:3.12-slim"
+                placeholder="nginx:alpine"
                 value={form.image}
                 onChange={(e) => update("image", e.target.value)}
               />
