@@ -20,10 +20,13 @@ jobs:
   rust:
     uses: ./.github/workflows/rust.yml
 
+  backend:
+    uses: ./.github/workflows/backend.yml
+
   ok:
     name: All checks
     if: always()
-    needs: [frontend, rust]
+    needs: [frontend, rust, backend]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -31,3 +34,4 @@ jobs:
         run: |
           test "${{ needs.frontend.result }}" = "success"
           test "${{ needs.rust.result }}" = "success"
+          test "${{ needs.backend.result }}" = "success"

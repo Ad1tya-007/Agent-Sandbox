@@ -12,13 +12,15 @@ React UI  →  WebSocket / HTTP  →  Go backend  →  client-go  →  Agent San
 
 Tauri (Rust) is the desktop shell only. Kubernetes access and product logic belong in Go. The UI never talks to the cluster.
 
-The Go backend is not in this repo yet. The current tree is the desktop shell (Tauri 2 + React + TypeScript + Vite + shadcn/ui).
+Backend implementation steps: [`BACKEND.md`](BACKEND.md).
 
 ## Prerequisites
 
+- [Go](https://go.dev/dl/) 1.23+
 - [Rust](https://rustup.rs/) (stable, with `rustfmt` and `clippy`)
 - Node 22+ (`nvm use` if you have nvm)
-- A Kubernetes cluster (needed once the Go backend lands)
+- A Kubernetes cluster with the [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) CRDs installed
+- A kubeconfig (defaults to `~/.kube/config`, or set `KUBECONFIG`)
 
 ## Setup
 
@@ -28,16 +30,25 @@ cp .env.example .env
 npm run tauri dev
 ```
 
+`tauri dev` starts the Go backend on `127.0.0.1:8787` and the Vite UI. The backend watches Sandbox objects in the current kubeconfig context namespace (override with `AGENT_SANDBOX_NAMESPACE`).
+
+To run the UI against the in-browser mock instead of a cluster:
+
+```bash
+VITE_USE_MOCK=true npm run dev
+```
+
 ## Checks
 
 ```bash
-npm run check          # typecheck + Prettier + rustfmt + clippy + tests
+npm run check          # typecheck + Prettier + rustfmt + clippy + tests + Go
 npm run typecheck
 npm run format:check
 npm run rust:check
+npm run backend:check
 ```
 
-Pre-commit runs Prettier on staged files. Pre-push runs typecheck, Prettier, and rustfmt. Clippy and tests run in CI.
+Pre-commit runs Prettier on staged files. Pre-push runs typecheck, Prettier, and rustfmt. Clippy, tests, and Go checks run in CI.
 
 ## Add UI components
 
@@ -53,4 +64,4 @@ npm run tauri build
 
 ## Recommended IDE setup
 
-- [VS Code](https://code.visualstudio.com/) / Cursor + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+- [VS Code](https://code.visualstudio.com/) / Cursor + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-analyzer.rust-analyzer) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
