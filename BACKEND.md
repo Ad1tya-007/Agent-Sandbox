@@ -16,15 +16,15 @@ The UI and a few Go stubs are already in the repo. **Extend them. Do not rewrite
 
 ### UI (done — do not rebuild)
 
-| Surface | How it gets data today |
-| --- | --- |
-| Sandbox table + inspector header | `useSandboxes()` ← watch WebSocket |
-| Connection badge | `useConnection()` ← `{ type: "connection" }` |
-| Create / pause / resume / delete | `src/services/sandboxes.ts` (HTTP commands) |
-| Logs tab | `useSandboxLogs(name)` ← logs WebSocket |
-| Events tab | `sandbox.events` on the view model |
-| YAML tab | `sandbox.yaml` on the view model |
-| Resource explorer | Derived in the UI from the Sandbox view model (`src/lib/resource-tree.ts`) |
+| Surface                          | How it gets data today                                                     |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| Sandbox table + inspector header | `useSandboxes()` ← watch WebSocket                                         |
+| Connection badge                 | `useConnection()` ← `{ type: "connection" }`                               |
+| Create / pause / resume / delete | `src/services/sandboxes.ts` (HTTP commands)                                |
+| Logs tab                         | `useSandboxLogs(name)` ← logs WebSocket                                    |
+| Events tab                       | `sandbox.events` on the view model                                         |
+| YAML tab                         | `sandbox.yaml` on the view model                                           |
+| Resource explorer                | Derived in the UI from the Sandbox view model (`src/lib/resource-tree.ts`) |
 
 The explorer does **not** call a separate REST tree API. The backend still needs a Resource Mapper internally: logs need the real Pod/container, and the Sandbox view model needs real node, IP, events, YAML, and whether a PVC exists.
 
@@ -93,15 +93,15 @@ Match this byte-for-byte. Extra JSON fields are ignored by TypeScript; **missing
 
 ### HTTP
 
-| Method | Path | Request body | Success |
-| --- | --- | --- | --- |
-| `GET` | `/healthz` | — | `200` `{ "status": "ok" }` |
-| `POST` | `/api/sandboxes` | `CreateInput` | `200` `{ "name": "<dns-label>" }` |
-| `POST` | `/api/sandboxes/{name}/pause` | — | `204` |
-| `POST` | `/api/sandboxes/{name}/resume` | — | `204` |
-| `DELETE` | `/api/sandboxes/{name}` | — | `204` |
-| `GET` | `/ws` | — | WebSocket (watch) |
-| `GET` | `/ws/logs?name=<sandbox>` | — | WebSocket (logs) |
+| Method   | Path                           | Request body  | Success                           |
+| -------- | ------------------------------ | ------------- | --------------------------------- |
+| `GET`    | `/healthz`                     | —             | `200` `{ "status": "ok" }`        |
+| `POST`   | `/api/sandboxes`               | `CreateInput` | `200` `{ "name": "<dns-label>" }` |
+| `POST`   | `/api/sandboxes/{name}/pause`  | —             | `204`                             |
+| `POST`   | `/api/sandboxes/{name}/resume` | —             | `204`                             |
+| `DELETE` | `/api/sandboxes/{name}`        | —             | `204`                             |
+| `GET`    | `/ws`                          | —             | WebSocket (watch)                 |
+| `GET`    | `/ws/logs?name=<sandbox>`      | —             | WebSocket (logs)                  |
 
 These routes are already registered in `internal/api/sandboxes.go`. Implement the missing helpers (`decodeJSON`, `writeJSON`, `writeError`, `cors`) rather than changing the paths.
 
@@ -129,13 +129,13 @@ Return JSON the frontend can put in a toast. Use this shape everywhere:
 
 Map `models.Error.Kind` (already in `internal/models/errors.go`):
 
-| Kind | HTTP | When |
-| --- | --- | --- |
-| `invalid` | 400 | Bad name/image/cpu/memory, malformed JSON |
-| `not_found` | 404 | Sandbox does not exist |
-| `conflict` | 409 | Name already exists |
-| `conflict_state` | 409 | Pause when not Running, resume when not Paused |
-| `internal` | 500 | Unexpected Kubernetes / watch / log failures |
+| Kind             | HTTP | When                                           |
+| ---------------- | ---- | ---------------------------------------------- |
+| `invalid`        | 400  | Bad name/image/cpu/memory, malformed JSON      |
+| `not_found`      | 404  | Sandbox does not exist                         |
+| `conflict`       | 409  | Name already exists                            |
+| `conflict_state` | 409  | Pause when not Running, resume when not Paused |
+| `internal`       | 500  | Unexpected Kubernetes / watch / log failures   |
 
 Copy these user-facing strings (the mock already uses them; keep them stable):
 
@@ -214,11 +214,15 @@ type Sandbox = {
   memory: string;
   node: string | null;
   ip: string | null;
-  createdAt: string;          // RFC3339
+  createdAt: string; // RFC3339
   persistentStorage: boolean;
-  conditions: { type: string; status: "True" | "False" | "Unknown"; message: string }[];
+  conditions: {
+    type: string;
+    status: "True" | "False" | "Unknown";
+    message: string;
+  }[];
   events: { id: string; title: string; detail: string; at: string }[];
-  yaml: string;               // read-only dump of the live object
+  yaml: string; // read-only dump of the live object
 };
 ```
 
@@ -404,19 +408,19 @@ Thin. No product errors except wrapping transport failures as `error`.
 
 Methods (names can vary; responsibilities cannot):
 
-| Method | Behavior |
-| --- | --- |
-| `CreateSandbox(ctx, obj *unstructured.Unstructured)` | `dynamic.Resource(gvr).Namespace(ns).Create` |
-| `GetSandbox(ctx, name)` | Get |
-| `DeleteSandbox(ctx, name)` | Delete |
-| `PatchSandbox(ctx, name, patch []byte)` | Merge patch |
-| `SandboxGVR()` | `schema.GroupVersionResource{Group:"agents.x-k8s.io", Version:"v1alpha1", Resource:"sandboxes"}` |
-| `ListPods(ctx, ns, selector)` | CoreV1 Pods |
-| `GetPod(ctx, ns, name)` | |
-| `ListPVCs(ctx, ns, selector)` | |
-| `ListServices(ctx, ns, selector)` | |
-| `ListEvents(ctx, ns, fieldSelector)` | Core Events for involvedObject |
-| `OpenLogs` | **already written** — do not duplicate |
+| Method                                               | Behavior                                                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `CreateSandbox(ctx, obj *unstructured.Unstructured)` | `dynamic.Resource(gvr).Namespace(ns).Create`                                                     |
+| `GetSandbox(ctx, name)`                              | Get                                                                                              |
+| `DeleteSandbox(ctx, name)`                           | Delete                                                                                           |
+| `PatchSandbox(ctx, name, patch []byte)`              | Merge patch                                                                                      |
+| `SandboxGVR()`                                       | `schema.GroupVersionResource{Group:"agents.x-k8s.io", Version:"v1alpha1", Resource:"sandboxes"}` |
+| `ListPods(ctx, ns, selector)`                        | CoreV1 Pods                                                                                      |
+| `GetPod(ctx, ns, name)`                              |                                                                                                  |
+| `ListPVCs(ctx, ns, selector)`                        |                                                                                                  |
+| `ListServices(ctx, ns, selector)`                    |                                                                                                  |
+| `ListEvents(ctx, ns, fieldSelector)`                 | Core Events for involvedObject                                                                   |
+| `OpenLogs`                                           | **already written** — do not duplicate                                                           |
 
 Also: `RESTConfig()`, `Namespace()`, `ClusterName()` (kubeconfig current context name).
 
@@ -485,15 +489,15 @@ Do not List without a selector/owner filter.
 
 Event translation (`translate.go`) — this is the Events tab. Map Kubernetes `reason` (and fallback `message`) to human titles. Deduplicate by `uid` or `name+timestamp`.
 
-| Kubernetes reason (typical) | Title | Detail |
-| --- | --- | --- |
-| Created / SuccessfulCreate | Sandbox Created | API server accepted the Sandbox resource / controller created child |
-| Scheduled | Scheduled | Assigned to `<node>` |
-| Pulling / Pulled | Image Pulled | `<image> pulled` |
-| Created (container) / Started | Container Started | sandbox container started |
-| Killing / BackOff / Unhealthy (restart) | Restarted | Keep the original message as detail |
-| Failed / FailedScheduling | Failed or keep Pending | Original message (e.g. insufficient CPU) |
-| default | `event.Reason` if non-empty else `"Event"` | `event.Message` |
+| Kubernetes reason (typical)             | Title                                      | Detail                                                              |
+| --------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------- |
+| Created / SuccessfulCreate              | Sandbox Created                            | API server accepted the Sandbox resource / controller created child |
+| Scheduled                               | Scheduled                                  | Assigned to `<node>`                                                |
+| Pulling / Pulled                        | Image Pulled                               | `<image> pulled`                                                    |
+| Created (container) / Started           | Container Started                          | sandbox container started                                           |
+| Killing / BackOff / Unhealthy (restart) | Restarted                                  | Keep the original message as detail                                 |
+| Failed / FailedScheduling               | Failed or keep Pending                     | Original message (e.g. insufficient CPU)                            |
+| default                                 | `event.Reason` if non-empty else `"Event"` | `event.Message`                                                     |
 
 `TimelineEvent.at` is RFC3339 from `lastTimestamp` or `eventTime`. `id` is the Event UID.
 
@@ -567,13 +571,13 @@ Complete `sandboxes.go` without changing route paths:
 
 Minimum:
 
-| Package | Tests |
-| --- | --- |
-| `sandbox` | Validate; `FromCreate` JSON shape; `Phase` (already have logic — table tests for Ready/Paused/Failed/Terminating); Pause/Resume state machine with a fake Kubernetes adapter |
-| `resources` | Event reason → title |
-| `models` | Error wrapping |
-| `logs` | Line parse (`ts` + `message`); subscribe/unsubscribe closes upstream (fake `io.ReadCloser`) |
-| `watcher` / `websocket` | Snapshot then added/updated/deleted; late subscriber gets snapshot |
+| Package                 | Tests                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sandbox`               | Validate; `FromCreate` JSON shape; `Phase` (already have logic — table tests for Ready/Paused/Failed/Terminating); Pause/Resume state machine with a fake Kubernetes adapter |
+| `resources`             | Event reason → title                                                                                                                                                         |
+| `models`                | Error wrapping                                                                                                                                                               |
+| `logs`                  | Line parse (`ts` + `message`); subscribe/unsubscribe closes upstream (fake `io.ReadCloser`)                                                                                  |
+| `watcher` / `websocket` | Snapshot then added/updated/deleted; late subscriber gets snapshot                                                                                                           |
 
 Fake the Kubernetes adapter with an interface defined **where the service needs it** (in `sandbox` or `kubernetes`). Do not require a cluster for `go test`.
 
